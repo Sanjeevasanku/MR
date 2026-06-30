@@ -1,6 +1,4 @@
-import { ChangedFile, GitLabMergeRequestChange } from '../types';
-
-export function extractChangedFiles(changes: GitLabMergeRequestChange[]): ChangedFile[] {
+function extractChangedFiles(changes) {
   return changes
     .filter((change) => !change.deleted_file)
     .filter((change) => change.diff && change.diff.trim().length > 0)
@@ -9,3 +7,5 @@ export function extractChangedFiles(changes: GitLabMergeRequestChange[]): Change
       diff: change.diff,
     }));
 }
+
+module.exports = { extractChangedFiles };

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Review Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --border: #e5e7eb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --brand: #2563eb;
+      --brand-soft: #dbeafe;
+      --success: #15803d;
+      --danger: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .app { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 240px;
+      background: #111827;
+      color: #e5e7eb;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .logo { font-weight: 700; font-size: 18px; letter-spacing: .2px; }
+    .nav-group { font-size: 12px; color: #9ca3af; text-transform: uppercase; margin-top: 8px; }
+    .nav-link {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #d1d5db;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .nav-link.active, .nav-link:hover { background: #1f2937; color: #fff; text-decoration: none; }
+    .content { flex: 1; display: flex; flex-direction: column; }
+    .topbar {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .main { padding: 16px; display: grid; gap: 16px; }
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); gap: 12px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+    .card h3 { margin: 0 0 8px; font-size: 16px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .issues-layout { display: grid; grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.1fr); gap: 16px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    input, select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 14px;
+      min-height: 36px;
+      background: #fff;
+    }
+    .search { flex: 1; min-width: 220px; }
+    .issue-list { display: grid; gap: 8px; max-height: calc(100vh - 260px); overflow: auto; padding-right: 2px; }
+    .issue-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      background: #fff;
+    }
+    .issue-item.active { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand-soft) inset; background: #f8fbff; }
+    .issue-title { margin: 6px 0 4px; font-size: 14px; line-height: 1.3; font-weight: 600; }
+    .issue-file { font-size: 12px; color: var(--muted); }
+    .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+    .HIGH { background: #fee2e2; color: #991b1b; }
+    .MEDIUM { background: #fef3c7; color: #92400e; }
+    .LOW { background: #dbeafe; color: #1e40af; }
+    .status { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+    .detail h2 { margin: 0; font-size: 19px; line-height: 1.3; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+    .chip {
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      border-radius: 999px;
+      font-size: 12px;
+      padding: 4px 8px;
+      color: #374151;
+    }
+    .section-title { margin: 14px 0 6px; font-size: 14px; font-weight: 700; }
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px 12px;
+      white-space: pre-wrap;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .actions { margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    button {
+      border: 0;
+      border-radius: 8px;
+      min-height: 36px;
+      padding: 8px 14px;
+      font-size: 14px;
+      background: var(--brand);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary { background: #e5e7eb; color: #111827; }
+    button.danger { background: #dc2626; color: #fff; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .error { color: var(--danger); font-size: 13px; }
+    .success { color: var(--success); font-size: 13px; }
+    .empty { border: 1px dashed var(--border); border-radius: 10px; padding: 20px; text-align: center; color: var(--muted); background: #fff; }
+    @media (max-width: 1100px) {
+      .issues-layout { grid-template-columns: 1fr; }
+      .issue-list { max-height: 330px; }
+      .sidebar { width: 200px; }
+    }
+    @media (max-width: 760px) {
+      .app { display: block; }
+      .sidebar { width: 100%; border-bottom: 1px solid #1f2937; }
+      .main { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">AI Review</div>
+      <div class="nav-group">Navigation</div>
+      <a id="nav-projects" class="nav-link active">Projects</a>
+      <a id="nav-issues" class="nav-link">Issues</a>
+    </aside>
+    <section class="content">
+      <div class="topbar">
+        <h1 id="title">Projects</h1>
+        <div class="meta" id="subtitle">Select a project to inspect findings</div>
+      </div>
+      <main class="main" id="app">
+        <div class="empty">Loading dashboard…</div>
+      </main>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      projects: [],
+      selectedProjectId: null,
+      issues: [],
+      selectedIssueId: null,
+      selectedIssueIds: [],
+      search: '',
+      severity: 'ALL',
+      status: 'open',
+      loading: false,
+      fixMessage: '',
+      fixMessageType: '',
+    };
+
+    function esc(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+
+    function normalizeStatus(status) {
+      return status === 'fix_pending' ? 'fixed' : (status || 'open');
+    }
+
+    function buildFixPlan(issue) {
+      if (!issue) {
+        return null;
+      }
+      return {
+        file: issue.file || 'unknown file',
+        baseBranch: issue.sourceBranch || 'unknown',
+        fixBranch: `ai-fix/mr-${issue.mergeRequestIid || 'x'}-<timestamp>`,
+        targetBranch: issue.targetBranch || 'main',
+      };
+    }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(options.headers || {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || res.statusText || 'Request failed');
+      }
+      return data;
+    }
+
+    function setHeader(title, subtitle) {
+      document.getElementById('title').textContent = title;
+      document.getElementById('subtitle').textContent = subtitle;
+    }
+
+    function navActive(mode) {
+      document.getElementById('nav-projects').classList.toggle('active', mode === 'projects');
+      document.getElementById('nav-issues').classList.toggle('active', mode === 'issues');
+    }
+
+    async function loadProjects() {
+      state.projects = await api('/api/projects');
+    }
+
+    async function loadIssues() {
+      if (!state.selectedProjectId) {
+        state.issues = [];
+        state.selectedIssueIds = [];
+        return;
+      }
+      const qs = new URLSearchParams();
+      if (state.status !== 'ALL') {
+        qs.set('status', state.status);
+      }
+      const suffix = qs.toString() ? `?${qs.toString()}` : '';
+      state.issues = await api(`/api/projects/${state.selectedProjectId}/issues${suffix}`);
+      if (!state.selectedIssueId && state.issues.length > 0) {
+        state.selectedIssueId = state.issues[0]._id;
+      }
+      if (state.selectedIssueId && !state.issues.some((item) => item._id === state.selectedIssueId)) {
+        state.selectedIssueId = state.issues[0]?._id ?? null;
+      }
+      state.selectedIssueIds = state.selectedIssueIds.filter((id) =>
+        state.issues.some((item) => item._id === id && normalizeStatus(item.status) === 'open')
+      );
+    }
+
+    function filteredIssues() {
+      let items = [...state.issues];
+      if (state.severity !== 'ALL') {
+        items = items.filter((item) => item.severity === state.severity);
+      }
+      if (state.search.trim()) {
+        const q = state.search.trim().toLowerCase();
+        items = items.filter((item) =>
+          [item.issue, item.file, item.explanation, item.suggestedFix]
+            .filter(Boolean)
+            .some((field) => String(field).toLowerCase().includes(q))
+        );
+      }
+      return items;
+    }
+
+    function selectedIssue() {
+      return state.issues.find((item) => item._id === state.selectedIssueId) || null;
+    }
+
+    function projectName(projectId) {
+      const project = state.projects.find((p) => String(p.gitlabProjectId) === String(projectId));
+      return project?.name || project?.pathWithNamespace || projectId;
+    }
+
+    function renderProjectsView() {
+      navActive('projects');
+      setHeader('Projects', 'Select a project to inspect findings');
+      const app = document.getElementById('app');
+      if (state.projects.length === 0) {
+        app.innerHTML = `
+          <div class="card">
+            <h3>No projects yet</h3>
+            <p class="muted">Open or update a merge request to trigger analysis and populate this dashboard.</p>
+          </div>
+        `;
+        return;
+      }
+      app.innerHTML = `
+        <div class="projects-grid">
+          ${state.projects
+            .map((project) => `
+              <article class="card">
+                <h3>${esc(project.name || project.pathWithNamespace || project.gitlabProjectId)}</h3>
+                <p class="muted">GitLab Project ID: ${esc(project.gitlabProjectId)}</p>
+                <p class="muted">${esc(project.openIssueCount)} open issue(s)</p>
+                <p class="muted">${project.webUrl ? `<a href="${esc(project.webUrl)}" target="_blank">Open on GitLab</a>` : ''}</p>
+                <div class="actions">
+                  <button data-project-open="${esc(project.gitlabProjectId)}">Open Issues</button>
+                  <button class="danger" data-project-delete="${esc(project.gitlabProjectId)}">Delete</button>
+                </div>
+              </article>
+            `)
+            .join('')}
+        </div>
+      `;
+      app.querySelectorAll('[data-project-open]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          state.selectedProjectId = btn.getAttribute('data-project-open');
+          state.selectedIssueId = null;
+          state.selectedIssueIds = [];
+          await refreshIssuesAndRender();
+        });
+      });
+      app.querySelectorAll('[data-project-delete]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const projectId = btn.getAttribute('data-project-delete');
+          const ok = window.confirm(
+            `Delete project ${projectId} from dashboard?\n\nThis removes stored scans, issues, and fix runs from MongoDB.`
+          );
+          if (!ok) {
+            return;
+          }
+          btn.disabled = true;
+          try {
+            await api(`/api/projects/${projectId}`, { method: 'DELETE' });
+            if (String(state.selectedProjectId) === String(projectId)) {
+              state.selectedProjectId = null;
+              state.selectedIssueId = null;
+              state.selectedIssueIds = [];
+            }
+            state.fixMessage = '';
+            state.fixMessageType = '';
+            await loadProjects();
+            renderProjectsView();
+          } catch (error) {
+            alert(`Delete failed: ${error.message}`);
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    function renderIssuesView() {
+      navActive('issues');
+      const list = filteredIssues();
+      const issue = selectedIssue();
+      const normalizedIssueStatus = issue ? normalizeStatus(issue.status) : 'open';
+      const fixPlan = buildFixPlan(issue);
+      const selectedOpenCount = state.selectedIssueIds.length;
+      setHeader(
+        `Issues - ${projectName(state.selectedProjectId)}`,
+        `${state.issues.length} total issue(s), ${list.length} shown`
+      );
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <section class="issues-layout">
+          <div class="card">
+            <div class="toolbar">
+              <input id="search" class="search" placeholder="Search issue, file, or explanation..." value="${esc(state.search)}" />
+              <select id="severity">
+                <option value="ALL" ${state.severity === 'ALL' ? 'selected' : ''}>Severity: All</option>
+                <option value="HIGH" ${state.severity === 'HIGH' ? 'selected' : ''}>Severity: High</option>
+                <option value="MEDIUM" ${state.severity === 'MEDIUM' ? 'selected' : ''}>Severity: Medium</option>
+                <option value="LOW" ${state.severity === 'LOW' ? 'selected' : ''}>Severity: Low</option>
+              </select>
+              <select id="status">
+                <option value="open" ${state.status === 'open' ? 'selected' : ''}>Status: Open</option>
+                <option value="fixed" ${state.status === 'fixed' ? 'selected' : ''}>Status: Fixed</option>
+                <option value="ALL" ${state.status === 'ALL' ? 'selected' : ''}>Status: All</option>
+              </select>
+              <button id="fix-selected" ${selectedOpenCount === 0 ? 'disabled' : ''}>
+                Fix selected (${selectedOpenCount})
+              </button>
+              <button id="refresh" class="secondary">Refresh</button>
+            </div>
+            ${
+              list.length === 0
+                ? '<div class="empty">No issues match the current filters.</div>'
+                : `<div class="issue-list">
+                    ${list
+                      .map(
+                        (item) => `
+                        <div class="issue-item ${item._id === state.selectedIssueId ? 'active' : ''}" data-issue-id="${esc(item._id)}">
+                          <div class="row">
+                            <div>
+                              ${
+                                normalizeStatus(item.status) === 'open'
+                                  ? `<input type="checkbox" data-issue-select="${esc(item._id)}" ${state.selectedIssueIds.includes(item._id) ? 'checked' : ''} />`
+                                  : ''
+                              }
+                              <span class="badge ${esc(item.severity)}">${esc(item.severity)}</span>
+                            </div>
+                            <span class="status">${esc(normalizeStatus(item.status))}</span>
+                          </div>
+                          <p class="issue-title">${esc(item.issue)}</p>
+                          <div class="issue-file">${esc(item.file || 'unknown file')} · MR !${esc(item.mergeRequestIid)}</div>
+                        </div>
+                      `
+                      )
+                      .join('')}
+                  </div>`
+            }
+          </div>
+          <div class="card detail">
+            ${
+              issue
+                ? `
+                  <h2>${esc(issue.issue)}</h2>
+                  <div class="chips">
+                    <span class="badge ${esc(issue.severity)}">${esc(issue.severity)}</span>
+                    <span class="chip">Status: ${esc(normalizedIssueStatus)}</span>
+                    <span class="chip">MR !${esc(issue.mergeRequestIid)}</span>
+                    <span class="chip">${esc(issue.file || 'unknown file')}</span>
+                    <span class="chip">Branch: ${esc(issue.sourceBranch || '-')}</span>
+                  </div>
+
+                  <div class="section-title">Where is the issue?</div>
+                  <div class="panel">${esc(issue.file || 'File location unavailable')}</div>
+
+                  <div class="section-title">Why is this an issue?</div>
+                  <div class="panel">${esc(issue.explanation || 'No explanation')}</div>
+
+                  <div class="section-title">Suggested fix</div>
+                  <div class="panel">${esc(issue.suggestedFix || 'No suggested fix')}</div>
+
+                  <div class="section-title">Fix plan</div>
+                  <div class="panel">Will modify: ${esc(fixPlan.file)}
+Base branch: ${esc(fixPlan.baseBranch)}
+Fix branch: ${esc(fixPlan.fixBranch)}
+Target branch: ${esc(fixPlan.targetBranch)}</div>
+
+                  <div class="actions">
+                    ${normalizedIssueStatus === 'open' ? '<button id="fix-btn">Fix this issue</button>' : ''}
+                    <button id="back-projects" class="secondary">Back to Projects</button>
+                    ${normalizedIssueStatus !== 'open' ? `<span class="muted">Only open issues can be fixed.</span>` : ''}
+                  </div>
+                  <div id="fix-feedback" class="${state.fixMessageType === 'error' ? 'error' : state.fixMessageType === 'success' ? 'success' : 'muted'}">${esc(state.fixMessage)}</div>
+                `
+                : '<div class="empty">Select an issue to view details.</div>'
+            }
+          </div>
+        </section>
+      `;
+
+      app.querySelector('#search')?.addEventListener('input', (e) => {
+        state.search = e.target.value;
+        renderIssuesView();
+      });
+      app.querySelector('#severity')?.addEventListener('change', (e) => {
+        state.severity = e.target.value;
+        renderIssuesView();
+      });
+      app.querySelector('#status')?.addEventListener('change', async (e) => {
+        state.status = e.target.value;
+        await refreshIssuesAndRender();
+      });
+      app.querySelector('#fix-selected')?.addEventListener('click', runFixForSelectedIssues);
+      app.querySelector('#refresh')?.addEventListener('click', refreshIssuesAndRender);
+      app.querySelector('#back-projects')?.addEventListener('click', () => {
+        state.selectedProjectId = null;
+        state.selectedIssueId = null;
+        state.selectedIssueIds = [];
+        state.fixMessage = '';
+        state.fixMessageType = '';
+        routeToProjects();
+      });
+      app.querySelectorAll('[data-issue-id]').forEach((node) => {
+        node.addEventListener('click', () => {
+          state.selectedIssueId = node.getAttribute('data-issue-id');
+          state.fixMessage = '';
+          state.fixMessageType = '';
+          renderIssuesView();
+        });
+      });
+      app.querySelectorAll('[data-issue-select]').forEach((node) => {
+        node.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const issueId = node.getAttribute('data-issue-select');
+          if (node.checked) {
+            if (!state.selectedIssueIds.includes(issueId)) {
+              state.selectedIssueIds.push(issueId);
+            }
+          } else {
+            state.selectedIssueIds = state.selectedIssueIds.filter((id) => id !== issueId);
+          }
+          renderIssuesView();
+        });
+      });
+      app.querySelector('#fix-btn')?.addEventListener('click', runFixForSelectedIssue);
+    }
+
+    async function runFixForSelectedIssue() {
+      const issue = selectedIssue();
+      if (!issue || normalizeStatus(issue.status) !== 'open') return;
+      state.fixMessage = 'Applying fix... this can take up to 60 seconds.';
+      state.fixMessageType = '';
+      renderIssuesView();
+      try {
+        const run = await api('/api/fix-runs', {
+          method: 'POST',
+          body: JSON.stringify({ findingId: issue._id }),
+        });
+        state.fixMessage = `Fix MR created: ${run.newMrUrl || `!${run.newMrIid || ''}`}. Status will move to fixed after a re-scan confirms the issue is gone.`;
+        state.fixMessageType = 'success';
+        await loadIssues();
+      } catch (error) {
+        state.fixMessage = error.message;
+        state.fixMessageType = 'error';
+      }
+      renderIssuesView();
+    }
+
+    async function runFixForSelectedIssues() {
+      const issueIds = state.selectedIssueIds.slice();
+      if (issueIds.length === 0) {
+        return;
+      }
+      state.fixMessage = `Applying fix for ${issueIds.length} selected issue(s)... this can take up to 90 seconds.`;
+      state.fixMessageType = '';
+      renderIssuesView();
+      try {
+        const run = await api('/api/fix-runs', {
+          method: 'POST',
+          body: JSON.stringify({ findingIds: issueIds }),
+        });
+        state.fixMessage = `Fix MR created: ${run.newMrUrl || `!${run.newMrIid || ''}`}. Selected issues will be marked fixed only after re-scan confirmation.`;
+        state.fixMessageType = 'success';
+        state.selectedIssueIds = [];
+        await loadIssues();
+      } catch (error) {
+        state.fixMessage = error.message;
+        state.fixMessageType = 'error';
+      }
+      renderIssuesView();
+    }
+
+    async function refreshIssuesAndRender() {
+      try {
+        await loadIssues();
+        renderIssuesView();
+      } catch (error) {
+        const app = document.getElementById('app');
+        app.innerHTML = `<div class="card error">Failed to load issues: ${esc(error.message)}</div>`;
+      }
+    }
+
+    async function bootstrap() {
+      document.getElementById('nav-projects').addEventListener('click', routeToProjects);
+      document.getElementById('nav-issues').addEventListener('click', async () => {
+        if (!state.selectedProjectId && state.projects.length > 0) {
+          state.selectedProjectId = state.projects[0].gitlabProjectId;
+        }
+        if (!state.selectedProjectId) {
+          routeToProjects();
+          return;
+        }
+        await refreshIssuesAndRender();
+      });
+
+      try {
+        await loadProjects();
+        routeToProjects();
+      } catch (error) {
+        const app = document.getElementById('app');
+        app.innerHTML = `<div class="card error">Failed to load dashboard: ${esc(error.message)}. Is MongoDB running?</div>`;
+      }
+    }
+
+    function routeToProjects() {
+      renderProjectsView();
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>

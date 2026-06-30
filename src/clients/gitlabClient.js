@@ -1,7 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
-import { AppConfig } from '../types';
+const axios = require('axios');
 
-export function createGitLabClient(config: AppConfig): AxiosInstance {
+function createGitLabClient(config) {
   return axios.create({
     baseURL: `${config.gitlab.baseUrl}/api/v4`,
     headers: {
@@ -11,3 +10,5 @@ export function createGitLabClient(config: AppConfig): AxiosInstance {
     timeout: 30_000,
   });
 }
+
+module.exports = { createGitLabClient };

@@ -1,22 +1,15 @@
-import { AxiosInstance } from 'axios';
-import {
-  ChangedFile,
-  GitLabMergeRequestChangesResponse,
-  IGitLabService,
-} from '../types';
-import { extractChangedFiles } from '../utils/diffExtractor';
-import { logger } from '../utils/logger';
+const { extractChangedFiles } = require('../utils/diffExtractor');
+const { logger } = require('../utils/logger');
 
-export class GitLabService implements IGitLabService {
-  constructor(private readonly client: AxiosInstance) {}
+class GitLabService {
+  constructor(client) {
+    this.client = client;
+  }
 
-  async getMergeRequestChanges(
-    projectId: number,
-    mergeRequestIid: number
-  ): Promise<ChangedFile[]> {
+  async getMergeRequestChanges(projectId, mergeRequestIid) {
     logger.info('Fetching Merge Request changes', { projectId, mergeRequestIid });
 
-    const response = await this.client.get<GitLabMergeRequestChangesResponse>(
+    const response = await this.client.get(
       `/projects/${projectId}/merge_requests/${mergeRequestIid}/changes`
     );
 
@@ -31,11 +24,7 @@ export class GitLabService implements IGitLabService {
     return changedFiles;
   }
 
-  async postMergeRequestNote(
-    projectId: number,
-    mergeRequestIid: number,
-    body: string
-  ): Promise<void> {
+  async postMergeRequestNote(projectId, mergeRequestIid, body) {
     logger.info('Posting GitLab comment', { projectId, mergeRequestIid });
 
     await this.client.post(
@@ -46,3 +35,5 @@ export class GitLabService implements IGitLabService {
     logger.info('GitLab comment posted', { projectId, mergeRequestIid });
   }
 }
+
+module.exports = { GitLabService };

@@ -1,10 +1,8 @@
-import { FindingSeverity, ICommentFormatter, ReviewResult } from '../types';
+const SEVERITY_ORDER = ['HIGH', 'MEDIUM', 'LOW'];
 
-const SEVERITY_ORDER: FindingSeverity[] = ['HIGH', 'MEDIUM', 'LOW'];
-
-export class CommentFormatter implements ICommentFormatter {
-  format(review: ReviewResult): string {
-    const lines: string[] = [
+class CommentFormatter {
+  format(review) {
+    const lines = [
       '# AI Review Summary',
       '',
       review.summary,
@@ -39,7 +37,7 @@ export class CommentFormatter implements ICommentFormatter {
     return lines.join('\n').trim();
   }
 
-  formatError(message: string): string {
+  formatError(message) {
     return [
       '# AI Review Summary',
       '',
@@ -49,3 +47,5 @@ export class CommentFormatter implements ICommentFormatter {
     ].join('\n');
   }
 }
+
+module.exports = { CommentFormatter };

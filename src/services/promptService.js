@@ -1,5 +1,3 @@
-import { ChangedFile, IPromptService } from '../types';
-
 const SYSTEM_INSTRUCTION = `You are an experienced software engineer performing a code review.
 Analyze the provided merge request diff and identify:
 - Bugs
@@ -25,8 +23,8 @@ Respond ONLY with valid JSON matching this exact schema:
 If no issues are found, return an empty findings array with a positive summary.
 Do not include markdown, code fences, or any text outside the JSON object.`;
 
-export class PromptService implements IPromptService {
-  buildPrompt(changedFiles: ChangedFile[]): string {
+class PromptService {
+  buildPrompt(changedFiles) {
     const fileSections = changedFiles
       .map(
         (file) =>
@@ -41,3 +39,5 @@ export class PromptService implements IPromptService {
 ${fileSections}`;
   }
 }
+
+module.exports = { PromptService };
